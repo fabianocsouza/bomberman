@@ -9,6 +9,7 @@ kaboom({
 
 //Variável global
 const MOVE_SPEED = 120
+const ENEMY_SPEED = 30
 
 //rota padrão
 loadRoot('https://i.imgur.com/');
@@ -18,7 +19,7 @@ loadSprite('wall-steel', 'EkleLlt.png')
 loadSprite('brick-red', 'C46n8aY.png');
 loadSprite('door', 'Ou9w4gH.png');
 loadSprite('kaboom', 'o9WizfI.png');
-loadSprite('bg', 'qIXIczt.png');
+loadSprite('background', 'qIXIczt.png');
 loadSprite('wall-gold', 'VtTXsgH.png');
 loadSprite('brick-wood', 'U751RRV.png');
 
@@ -41,6 +42,18 @@ loadSprite('bomberman','T0xbHb8.png', {
   }
 })
 
+loadSprite('bomber','etY46bP.png', {
+  sliceX: 3,
+  anims: {
+    move: {from: 0, to: 2}
+  }
+})
+
+//sprite inimigos
+loadSprite('baloon', 'z59lNU0.png', {sliceX: 3})
+loadSprite('ghost', '6YV0Zas.png', {sliceX: 3})
+loadSprite('slime', 'c1Vj0j1.png', {sliceX: 3})
+
 //cenário do jogo
 scene('game', () => {
   layers(['background', 'object', 'ui'], 'object');
@@ -51,13 +64,13 @@ scene('game', () => {
       '      a             a',
       '      a             a',
       '      a             a',
+      '      a       }     a',
       '      a             a',
       '      a             a',
+      '      a     &       a',
       '      a             a',
       '      a             a',
-      '      a             a',
-      '      a             a',
-      '      a             a',
+      '      a       *     a',
       '      a             a',
       '      a             a',
       '      a             a',
@@ -74,9 +87,14 @@ scene('game', () => {
     w: [sprite('brick-wood'), 'wall-brick', solid(), 'wall'],
     p: [sprite('brick-wood'), 'wall-brick-dool', solid(), 'wall'],
     t: [sprite('door'), 'door', 'wall'],
+    '}': [sprite('ghost'), 'ghost', 'dangerous', {dir: -1, time: 0}],
+    '&': [sprite('slime'), 'slime', 'dangerous', {tdir: -1, ime: 0}],
+    '*': [sprite('baloon'), 'baloon', 'dangerous', {dir: -1, time: 0}],
   }
 
   const gameLeve = addLevel(maps[0], leveConfig)
+
+  add([sprite('background'), layer('background'),pos(175, 25), scale(0.90, 0.80)])
 
   const player = add([
     sprite('bomberman', {
@@ -140,6 +158,18 @@ scene('game', () => {
   })
   keyRelease('down', () => {
     player.play('idleDown')
+  })
+
+  //Actions Enemys
+  action('baloon', (baloon) => {
+    //enpurra tudo que for solido
+    baloon.pushOutAll();
+    baloon.move(baloon.dir * ENEMY_SPEED, 0);
+    baloon.time -= dt();
+    if(baloon.time <= 0){
+      baloon.dir = -baloon.dir
+      baloon.time = rand(5)
+    }
   })
 
 })
