@@ -42,12 +42,15 @@ loadSprite('bomberman','T0xbHb8.png', {
   }
 })
 
+//bomba e explosão
 loadSprite('bomber','etY46bP.png', {
   sliceX: 3,
   anims: {
     move: {from: 0, to: 2}
   }
 })
+
+loadSprite('explosion', 'baBxoqs.png', {sliceX: 5, sliceY: 5})
 
 //sprite inimigos
 loadSprite('baloon', 'z59lNU0.png', {sliceX: 3})
@@ -88,7 +91,7 @@ scene('game', () => {
     p: [sprite('brick-wood'), 'wall-brick-dool', solid(), 'wall'],
     t: [sprite('door'), 'door', 'wall'],
     '}': [sprite('ghost'), 'ghost', 'dangerous', {dir: -1, time: 0}],
-    '&': [sprite('slime'), 'slime', 'dangerous', {tdir: -1, ime: 0}],
+    '&': [sprite('slime'), 'slime', 'dangerous', {dir: -1, time: 0}],
     '*': [sprite('baloon'), 'baloon', 'dangerous', {dir: -1, time: 0}],
   }
 
@@ -146,6 +149,10 @@ scene('game', () => {
     player.play('moveDown')
   })
 
+  keyPress('space', () => {
+    spawnBomber(player.pos.add(player.dir.scale(0)))
+  })
+
   //Animation stopped
   keyRelease('left', () => {
     player.play('idleLeft')
@@ -170,6 +177,95 @@ scene('game', () => {
       baloon.dir = -baloon.dir
       baloon.time = rand(5)
     }
+  })
+
+  action('slime', (slime) => {
+    //enpurra tudo que for solido
+    slime.pushOutAll();
+    slime.move(slime.dir * ENEMY_SPEED, 0);
+    slime.time -= dt();
+    if(slime.time <= 0){
+      slime.dir = -slime.dir
+      slime.time = rand(5)
+    }
+  })
+
+  action('ghost', (ghost) => {
+    //enpurra tudo que for solido
+    ghost.pushOutAll();
+    ghost.move(0, ghost.dir * ENEMY_SPEED);
+    ghost.time -= dt();
+    if(ghost.time <= 0){
+      ghost.dir = -ghost.dir
+      ghost.time = rand(5)
+    }
+  })
+
+  //Functions bomber
+  function spawnBomber(positionPlayer) {
+    const bomber = add([sprite('bomber'), ('move'), pos(positionPlayer), scale(1), 'bomber']);
+    bomber.pushOutAll();
+    bomber.play('move');
+
+    wait(2, () => {
+      destroy(bomber);
+
+      bomber.dir = vec2(-2, 0)
+      spawnKaboom(bomber.pos.add(bomber.dir.scale(20)), 10) // explosion left
+      bomber.dir = vec2(-1, 0)
+      spawnKaboom(bomber.pos.add(bomber.dir.scale(20)), 11) // explosion left
+
+      bomber.dir = vec2(0, -1)
+      spawnKaboom(bomber.pos.add(bomber.dir.scale(20)), 7) // explosion up
+      bomber.dir = vec2(0, -2)
+      spawnKaboom(bomber.pos.add(bomber.dir.scale(20)), 2) // explosion up
+
+      bomber.dir = vec2(1, 0)
+      spawnKaboom(bomber.pos.add(bomber.dir.scale(20)), 13) // explosion right
+      bomber.dir = vec2(2, 0)
+      spawnKaboom(bomber.pos.add(bomber.dir.scale(20)), 14) // explosion right
+
+      bomber.dir = vec2(1,0)
+      spawnKaboom(bomber.pos.add(bomber.dir.scale(0)), 12) // explosion center
+
+      bomber.dir = vec2(0, 1)
+      spawnKaboom(bomber.pos.add(bomber.dir.scale(20)), 17) // explosion down
+      bomber.dir = vec2(0, 2)
+      spawnKaboom(bomber.pos.add(bomber.dir.scale(20)), 22) // explosion down
+    })
+  }
+
+  function spawnKaboom(positionBomber, frame) {
+    const explosion = add([
+      sprite('explosion', {
+        animeSpeed: 0.1,
+        frame: frame
+      }),
+      pos(positionBomber),
+      scale(1.5),
+      'kaboom'
+    ])
+
+    explosion.pushOutAll();
+    wait(0.3, () => {
+      destroy(explosion);
+    })
+  }
+
+  //Collisions
+  player.collides('door', (door) => {
+    go('game', {
+      level: (level + 1) % maps.length +5,
+      score: scoreLabel.value
+    })
+  })
+
+  collides('kaboom', 'dangerous', (kaboom, objects) => {
+    camShake(4);
+    wait(1, () => {
+      destroy(kaboom)
+    })
+    destroy(objects);
   })
 
 })
